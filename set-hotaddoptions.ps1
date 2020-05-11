@@ -31,26 +31,47 @@ Begin {
     # Clear Screen
     Clear-host
 
-    # Add start-transact here
-   # Start-Transcript -path .\hotaddoptionslogging.txt 
+   # Add start-transact here
+   Start-Transcript -path .\hotaddoptionslogging.txt 
 
 }
 
 Process {
 
-    write-host "INFO: Verifying HotAdd options for VM $Name"
+            write-host "INFO: Verifying HotAdd options for VM $Name"
 
-    # Check to see if options are set
-    $result = (get-vm $Name | select-object ExtensionData).ExtensionData.config | Select-object Name, MemoryHotAddEnabled, CpuHotAddEnabled
+            # Check to see if options are set
+            $result = (get-vm $Name | select-object ExtensionData).ExtensionData.config | Select-object Name, MemoryHotAddEnabled, CpuHotAddEnabled
 
-    $result
+            
 
-}
+            if ($result.MemoryHotAddEnabled -match "False")
+                {
+                    write-host "INFO: Memory Hot Add for $Name is not set we will enable this setting"
+
+                    # Set Memory Hot Add to Enabled
+                    $vm = get-vm $Name
+                    $spec = New-Object VMware.Vim.VirtualMachineConfigSpec
+                    $spec.MemoryHotAddEnabled = $true
+                    $vm.ExtensionData.ReconfigVM($spec)
+                }
+            if ($result.CpuHotAddEnabled -match "False")
+                {
+                    write-host "INFO: CPU Hot Add for $Name is not set we will enable this setting"
+
+                    # Set CPU Hot Add to Enabled
+                    $vm = get-vm $Name
+                    $spec = New-Object VMware.Vim.VirtualMachineConfigSpec
+                    $spec.CpuHotAddEnabled = $true
+                    $vm.ExtensionData.ReconfigVM($spec)
+                }
+ 
+     }
 
 End {
  
  # Stop Logging    
-#Stop-Transcript
+Stop-Transcript
 
 }
 
